@@ -1,0 +1,53 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+
+- task: UseDotNet@2
+  displayName: 'Install .NET sdk'
+  inputs:
+    packageType: sdk
+    version: 6.0.x
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
+- task: CmdLine@2
+  displayName: 'Install Maui Workload'
+  inputs:
+    script: 'dotnet workload install maui'
+
+
+- task: DotNetCoreCLI@2
+  displayName: 'Running Tests'
+  inputs:
+    command: test
+    projects: '**/*Tests/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+    
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publishing'
+  inputs:
+    command: publish
+    publishWebProjects: true
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publishing to Aritifact'
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'myfirstdevopsproject'
+
+- script: dotnet build --configuration $(buildConfiguration)
+  displayName: 'Build Release'
